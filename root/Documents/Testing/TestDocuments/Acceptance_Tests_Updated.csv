@@ -1,0 +1,15 @@
+Test ID,Requirement,Jira ID,Test Description,Expected Result,Status
+AT-01,REQ-01,TY-001,Verify that engines must be at the front of the train and freight cars follow them.,Train allows adding engine first then freight. Status: 0,PASS
+AT-02,REQ-02,TY-002,Verify that an engine cannot be added after a freight car has already been added.,System rejects engine addition after freight. Status: non-zero,PASS
+AT-03,REQ-03,TY-003,Verify that the pull capacity formula correctly calculates (engines * 5000 kg).,getPullCapacity returns 10000 for 2 engines.,PASS
+AT-04,REQ-04,TY-004,Verify that the system-wide maximum weight limit of 20,000 kg is strictly enforced.,System rejects adding car that exceeds 20000 kg total.,PASS
+AT-05,REQ-05,TY-005,Verify that a train without at least one engine is considered unsafe.,isTrainSafe returns 0 for train with only freight.,PASS
+AT-06,REQ-06,TY-006,Verify that OIL cars cannot be the first freight car immediately following engines.,System rejects adding OIL as first freight car.,PASS
+AT-07,REQ-07,TY-007,Verify that WOOD and OIL cars can never be placed adjacent to each other.,System rejects adding OIL next to WOOD.,PASS
+AT-08,REQ-08,TY-008,Verify that removing a car is blocked if it would result in WOOD-OIL adjacency.,System blocks removal that causes adjacency hazard.,PASS
+AT-09,REQ-09,TY-009,Verify that adding a car with zero or negative weight is rejected.,System rejects weight <= 0.,PASS
+AT-10,REQ-10,TY-010,Verify that the train cannot exceed the maximum capacity of 50 cars.,System rejects 51st car addition.,PASS
+AT-11,REQ-11,TY-011,Verify that freight load cannot exceed the total pull capacity of the engines.,System rejects freight heavier than pull capacity.,PASS
+AT-12,REQ-12,TY-012,Verify that removing the only engine from a train is blocked.,System blocks removing the last engine.,PASS
+AT-13,REQ-13,TY-013,Verify that removing a car is blocked if it makes OIL the first freight car.,System blocks removal that shifts OIL to first freight pos.,PASS
+AT-14,REQ-14,TY-014,Verify that engines must remain at the front of the train after an engine removal.,Remaining engines must stay at indices < freight indices.,PASS

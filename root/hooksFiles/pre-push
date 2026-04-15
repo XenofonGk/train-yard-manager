@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Train Yard Management System - Pre-push Validation Hook
+# This script ensures that all automated tests pass before code is pushed to the repository.
+
+echo "-------------------------------------------------------"
+echo "Running automated test suite for validation..."
+echo "-------------------------------------------------------"
+
+# Set paths relative to project root
+PROJECT_DIR="root/SourceCode/Project"
+EXECUTABLE="./test_runner_validation"
+
+# Compile the test runner
+# Using clang for Mac/Linux compatibility
+clang "$PROJECT_DIR/train_yard.c" "$PROJECT_DIR/test_runner.c" -I"$PROJECT_DIR" -o "$EXECUTABLE"
+
+if [ $? -ne 0 ]; then
+    echo >&2 "ERROR: Compilation failed! Push aborted."
+    exit 1
+fi
+
+# Execute tests
+$EXECUTABLE
+TEST_RESULT=$?
+
+# Clean up build artifacts
+rm "$EXECUTABLE"
+
+if [ $TEST_RESULT -ne 0 ]; then
+    echo >&2 "-------------------------------------------------------"
+    echo >&2 "ERROR: Automated tests failed! Push aborted."
+    echo >&2 "Please fix all failures before attempting to push."
+    echo >&2 "-------------------------------------------------------"
+    exit 1
+fi
+
+echo "-------------------------------------------------------"
+echo "SUCCESS: All tests passed. Proceeding with push."
+echo "-------------------------------------------------------"
+
+exit 0
