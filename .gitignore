@@ -1,0 +1,18 @@
+# C build output
+*.o
+*.out
+*.dSYM/
+train_yard_app
+test_runner_app
+
+# macOS
+.DS_Store
+
+# Office lock files
+~$*
+
+# Visual Studio / MSVC
+Debug/
+Release/
+x64/
+.vs/
