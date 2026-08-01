@@ -30,6 +30,34 @@ typedef struct {
 * Returns 0 on success; returns a non-zero value if the train is full
 * (carCount >= MAX_CARS) or on other failure.
 */
+
+/*
+ * Why the last addCar/removeCar call was refused.
+ *
+ * Both functions return 0 or 1, which is all a caller needs to know whether the
+ * train changed — but "1" covers eight different rules, so a caller cannot tell
+ * the user what they did wrong, and a test cannot assert that the rule it meant
+ * to exercise is the one that fired. getLastRejectReason() reports which.
+ *
+ * The 0/1 return is unchanged, so existing callers and tests are unaffected.
+ */
+enum RejectReason {
+    REJECT_NONE = 0,
+    REJECT_NULL_TRAIN,
+    REJECT_TRAIN_FULL,
+    REJECT_BAD_TYPE,
+    REJECT_BAD_WEIGHT,
+    REJECT_TOTAL_WEIGHT,      /* over the 20000 limit for the whole train   */
+    REJECT_ENGINE_ORDER,      /* engines must all sit at the front          */
+    REJECT_OIL_FIRST_FREIGHT, /* the first freight car may not be oil       */
+    REJECT_WOOD_OIL_ADJACENT, /* wood and oil may never be coupled together */
+    REJECT_PULL_CAPACITY,     /* freight exceeds what the engines can pull  */
+    REJECT_BAD_INDEX,
+    REJECT_LAST_ENGINE        /* a train must keep at least one engine      */
+};
+
+int getLastRejectReason(void);
+
 int addCar(Train* train, int type, int weight);
 
 /*

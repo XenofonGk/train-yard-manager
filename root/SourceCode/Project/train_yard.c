@@ -4,6 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Set at every refusal; read back with getLastRejectReason(). */
+static int g_lastRejectReason = REJECT_NONE;
+
+int getLastRejectReason(void)
+{
+    return g_lastRejectReason;
+}
+
+/* Records why a call is being refused and returns the refusal code, so each
+   rejection site stays a single line. */
+static int reject(int reason)
+{
+    g_lastRejectReason = reason;
+    return 1;
+}
+
 /*
 Function: addCar
 Purpose: Adds a new car to the end of the train inventory.
@@ -17,23 +33,23 @@ int addCar(Train* train, int type, int weight)
 
     /* check if train pointer is valid */
     if (train == NULL)
-        return 1;
+        return reject(REJECT_NULL_TRAIN);
 
     /* check if train already has maximum cars */
     if (train->carCount >= MAX_CARS)
-        return 1;
+        return reject(REJECT_TRAIN_FULL);
 
     /* check if type is valid */
     if (type < TYPE_ENGINE || type > TYPE_OIL)
-        return 1;
+        return reject(REJECT_BAD_TYPE);
 
     /* check if weight is valid */
     if (weight <= 0)
-        return 1;
+        return reject(REJECT_BAD_WEIGHT);
 
     /* check if adding this car breaks total weight rule */
     if (train->totalWeight + weight > 20000)
-        return 1;
+        return reject(REJECT_TOTAL_WEIGHT);
 
     /* engine cars must stay at the front */
     if (type == TYPE_ENGINE)
@@ -41,14 +57,14 @@ int addCar(Train* train, int type, int weight)
         for (i = 0; i < train->carCount; i++)
         {
             if (train->inventory[i].type != TYPE_ENGINE)
-                return 1;
+                return reject(REJECT_ENGINE_ORDER);
         }
     }
     else
     {
         /* first freight car cannot be oil */
         if (train->carCount == train->numEngines && type == TYPE_OIL)
-            return 1;
+            return reject(REJECT_OIL_FIRST_FREIGHT);
 
         /* wood and oil cannot be next to each other */
         if (train->carCount > 0)
@@ -58,7 +74,7 @@ int addCar(Train* train, int type, int weight)
             if ((lastType == TYPE_WOOD && type == TYPE_OIL) ||
                 (lastType == TYPE_OIL && type == TYPE_WOOD))
             {
-                return 1;
+                return reject(REJECT_WOOD_OIL_ADJACENT);
             }
         }
 
@@ -71,7 +87,7 @@ int addCar(Train* train, int type, int weight)
 
         /* check pull capacity rule */
         if (freightWeight + weight > train->numEngines * 5000)
-            return 1;
+            return reject(REJECT_PULL_CAPACITY);
     }
 
     /* add the car at the end of the inventory */
@@ -86,6 +102,7 @@ int addCar(Train* train, int type, int weight)
     if (type == TYPE_ENGINE)
         train->numEngines = train->numEngines + 1;
 
+    g_lastRejectReason = REJECT_NONE;
     return 0;
 }
 
@@ -102,11 +119,11 @@ int removeCar(Train* train, int index)
 
     /* check if train pointer is valid */
     if (train == NULL)
-        return 1;
+        return reject(REJECT_NULL_TRAIN);
 
     /* check if index is valid */
     if (index < 0 || index >= train->carCount)
-        return 1;
+        return reject(REJECT_BAD_INDEX);
 
     /* copy current train into temp for safe checking */
     temp = *train;
@@ -129,7 +146,7 @@ int removeCar(Train* train, int index)
 
     /* train must still have at least one engine */
     if (temp.numEngines < 1)
-        return 1;
+        return reject(REJECT_LAST_ENGINE);
 
     /* engine cars must still remain at the front */
     for (i = 0; i < temp.carCount; i++)
@@ -140,7 +157,7 @@ int removeCar(Train* train, int index)
             for (j = 0; j < i; j++)
             {
                 if (temp.inventory[j].type != TYPE_ENGINE)
-                    return 1;
+                    return reject(REJECT_ENGINE_ORDER);
             }
         }
     }
@@ -151,7 +168,7 @@ int removeCar(Train* train, int index)
         if (temp.inventory[i].type != TYPE_ENGINE)
         {
             if (temp.inventory[i].type == TYPE_OIL)
-                return 1;
+                return reject(REJECT_OIL_FIRST_FREIGHT);
             break;
         }
     }
@@ -162,11 +179,12 @@ int removeCar(Train* train, int index)
         if ((temp.inventory[i].type == TYPE_WOOD && temp.inventory[i + 1].type == TYPE_OIL) ||
             (temp.inventory[i].type == TYPE_OIL && temp.inventory[i + 1].type == TYPE_WOOD))
         {
-            return 1;
+            return reject(REJECT_WOOD_OIL_ADJACENT);
         }
     }
 
     /* if valid, copy temp back into real train */
+    g_lastRejectReason = REJECT_NONE;
     *train = temp;
     return 0;
 }
