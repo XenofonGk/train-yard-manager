@@ -183,6 +183,18 @@ int removeCar(Train* train, int index)
         }
     }
 
+    /* remaining engines must still pull the remaining freight */
+    {
+        float freightWeight = 0.0f;
+        for (i = 0; i < temp.carCount; i++)
+        {
+            if (temp.inventory[i].type != TYPE_ENGINE)
+                freightWeight = freightWeight + temp.inventory[i].weight;
+        }
+        if (freightWeight > temp.numEngines * 5000)
+            return reject(REJECT_PULL_CAPACITY);
+    }
+
     /* if valid, copy temp back into real train */
     g_lastRejectReason = REJECT_NONE;
     *train = temp;

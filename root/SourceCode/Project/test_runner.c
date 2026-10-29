@@ -153,6 +153,24 @@ int AT14_EnginesStayAtFrontOnRemove() {
     return (result == 0 && t.inventory[0].type == TYPE_ENGINE);
 }
 
+/* Pull capacity enforced on remove: two engines pull 10000, the freight is
+   6000, so either engine is needed. Removing one must be refused, and the
+   refusal must leave the train exactly as it was. */
+int AT15_PullCapacityEnforcedOnRemove() {
+    Train t = {0};
+    Train before;
+    addCar(&t, TYPE_ENGINE, 1000);
+    addCar(&t, TYPE_ENGINE, 1000);
+    addCar(&t, TYPE_FOOD, 3000);
+    addCar(&t, TYPE_FOOD, 3000);
+    before = t;
+    int result = removeCar(&t, 0);
+    return (result != 0 &&
+            getLastRejectReason() == REJECT_PULL_CAPACITY &&
+            memcmp(&before, &t, sizeof t) == 0 &&
+            isTrainSafe(&t) == 1);
+}
+
 // --- INTEGRATION TESTS ---
 int IT01_EnginePowerValidation() {
     Train t = {0};
@@ -197,7 +215,7 @@ int IT04_SystemLimitEnforced() {
 
 int main() {
     int passed = 0;
-    int total = 21;
+    int total = 22;
 
     printf("--- ORIGINAL UNIT TESTS ---\n");
     if (test_addCar_success()) { printf("Original 01: PASSED\n"); passed++; } else printf("Original 01: FAILED\n");
@@ -219,6 +237,7 @@ int main() {
     if (AT12_MinimumOneEngineEnforcedOnRemove()) { printf("AT-12 [TY-012]: PASSED\n"); passed++; } else printf("AT-12 [TY-012]: FAILED\n");
     if (AT13_FirstFreightOilEnforcedOnRemove()) { printf("AT-13 [TY-013]: PASSED\n"); passed++; } else printf("AT-13 [TY-013]: FAILED\n");
     if (AT14_EnginesStayAtFrontOnRemove()) { printf("AT-14 [TY-014]: PASSED\n"); passed++; } else printf("AT-14 [TY-014]: FAILED\n");
+    if (AT15_PullCapacityEnforcedOnRemove()) { printf("AT-15: PASSED\n"); passed++; } else printf("AT-15: FAILED\n");
 
     printf("\n--- INTEGRATION TESTS ---\n");
     if (IT01_EnginePowerValidation()) { printf("IT-01: PASSED\n"); passed++; } else printf("IT-01: FAILED\n");
@@ -227,6 +246,7 @@ int main() {
     if (IT04_SystemLimitEnforced()) { printf("IT-04: PASSED\n"); passed++; } else printf("IT-04: FAILED\n");
 
     printf("\nSummary: %d/%d tests passed.\n", passed, total);
-    printf("NOTE: All acceptance tests mapped to Jira tickets.\n");
-    return 0;
+    /* A nonzero exit is what lets make, CI and the pre-push hook see a
+       failure; printing it is not enough. */
+    return passed == total ? 0 : 1;
 }
